@@ -252,7 +252,7 @@ const StoqleMarketplace: React.FC = () => {
 
             <div className="w-80 hidden lg:block">
               <div className="rounded-2xl overflow-hidden shadow-xl">
-                <img src={products[0]?.images?.[0]?.file_url || `https://picsum.photos/seed/stoqle-featured/800/600`} alt="Featured" className="w-full h-56 object-cover" />
+                <img src={products[0]?.images?.[0]?.file_url} alt="Featured" className="w-full h-56 object-cover" />
               </div>
             </div>
           </div>
