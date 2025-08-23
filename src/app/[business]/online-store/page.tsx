@@ -320,7 +320,7 @@ export default function VendorDashboard() {
                     )}
                   </h3>
 
-                  <p className="text-xs text-gray-400">https://stoqle.com/{user && user?.business_slug}/{store.slug}</p>
+                  <p className="text-xs text-gray-400">https://stoqle.com/vendors/{user && user?.business_slug}/{store.slug}</p>
                 </motion.div>
               ))}
 
