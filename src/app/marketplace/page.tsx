@@ -82,7 +82,7 @@ const Badge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // ---------- Product Card ----------
 const ProductCard: React.FC<{ p: ApiProduct; onOpen: (p: ApiProduct) => void }> = ({ p, onOpen }) => {
-  const image = p.images?.[0]?.file_url || `https://picsum.photos/seed/stoqle-${p.product_id}/800/800`
+  const image = p.images?.[0]?.file_url
 
   return (
     <motion.article
