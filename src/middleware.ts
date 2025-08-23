@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 const PUBLIC_ROUTES = [
   '/',
-  '/marketplace/',
+  '/marketplace',
   '/vendors',
   '/about-us',
   '/help',
