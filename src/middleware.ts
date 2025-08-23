@@ -3,8 +3,15 @@ import type { NextRequest } from 'next/server';
 
 const PUBLIC_ROUTES = [
   '/',
+  '/marketplace/',
+  'vendors',
+  'about-us',
+  'help',
+  'privact-policy',
+  'terms-of-services',
+  'cookie-policy',
   '/login',
-  '/register',
+  '/signup',
   '/forgot-password',
   '/reset-password',
 ];
