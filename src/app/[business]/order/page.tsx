@@ -29,7 +29,23 @@ interface Order {
   variant?: any | null;
 }
 
-export default function VendorsOrdersPage({ vendorBusinessId }: { vendorBusinessId?: number | null }) {
+/**
+ * Important:
+ * - Do NOT declare a top-level `PageProps` type here — Next generates its own and naming collisions break the build.
+ * - Use `props: any` (or inline param types) so Next's generated types are not compared to a user-defined PageProps.
+ */
+export default function VendorsOrdersPage(props: any) {
+  const { params, searchParams } = props ?? {};
+  // Derive vendorBusinessId from searchParams (if provided).
+  let vendorBusinessId: number | null = null;
+  if (searchParams?.vendorBusinessId) {
+    const raw = Array.isArray(searchParams.vendorBusinessId)
+      ? searchParams.vendorBusinessId[0]
+      : searchParams.vendorBusinessId;
+    const n = Number(raw);
+    vendorBusinessId = Number.isFinite(n) ? n : null;
+  }
+
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
   const API_ENDPOINT = `${API_BASE}/api/orders/orders`;
 
@@ -69,9 +85,9 @@ export default function VendorsOrdersPage({ vendorBusinessId }: { vendorBusiness
       const data = await res.json();
 
       if (res.status === 401 || data.message === "Unauthorized") {
-        localStorage.removeItem("token");
+        if (typeof window !== "undefined") localStorage.removeItem("token");
         toast.error("Session expired. Please log in again");
-        window.location.href = "/login";
+        if (typeof window !== "undefined") window.location.href = "/login";
         return;
       }
 
@@ -80,9 +96,9 @@ export default function VendorsOrdersPage({ vendorBusinessId }: { vendorBusiness
       const list: Order[] = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
       setOrders(list);
     } catch (err: any) {
-      if (err.name === "AbortError") return;
+      if (err?.name === "AbortError") return;
       console.error(err);
-      toast.error(err.message || "Error loading orders");
+      toast.error(err?.message || "Error loading orders");
     } finally {
       setLoading(false);
     }
@@ -113,7 +129,7 @@ export default function VendorsOrdersPage({ vendorBusinessId }: { vendorBusiness
       setOrders(prev => prev.filter(o => o.order_id !== deletingOrder.order_id));
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Failed to reject order");
+      toast.error(err?.message || "Failed to reject order");
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);
@@ -140,7 +156,7 @@ export default function VendorsOrdersPage({ vendorBusinessId }: { vendorBusiness
       setOrders(prev => prev.map(o => (o.order_id === orderId ? { ...o } : o)));
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Could not mark completed");
+      toast.error(err?.message || "Could not mark completed");
     } finally {
       setLoading(false);
     }
@@ -175,8 +191,6 @@ export default function VendorsOrdersPage({ vendorBusinessId }: { vendorBusiness
 
   return (
     <div className="space-y-8 p-6 md:p-12 bg-gray-100 min-h-screen rounded-xl">
-      
-
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}

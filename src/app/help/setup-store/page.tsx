@@ -1,5 +1,5 @@
-import Navbar from "@/components/Navbar";
-import { setupStoreData } from "@/data/officialContent";
+import Navbar from "@/app/components/Navbar";
+import { setupStoreData } from "@/app/data/officialContent";
 
 export default function SetupStorePage() {
   return (
