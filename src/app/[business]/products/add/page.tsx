@@ -348,7 +348,7 @@ if (hasVariants) {
     return;
   }
 
-  const res = await fetch('http://localhost:4000/api/products/', {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${JSON.parse(token)}`,
