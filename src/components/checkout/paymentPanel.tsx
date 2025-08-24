@@ -299,7 +299,7 @@ const goBackToSale = () => {
           <div className="w-full max-w-sm mt-2">
             <div className="flex justify-center gap-5">
               <button
-                onClick={goBackToSale}
+                onClick={() => router.back()}
                 className="px-4 py-2 rounded-xl border border-gray-200 text-white text-sm hover:bg-gray-800 bg-black"
               >
                 ← Back to Sale
