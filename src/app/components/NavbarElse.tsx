@@ -210,77 +210,92 @@ export default function Navbar() {
         </div>
 
         <div
-          className={`bg-white/80 backdrop-blur-md border-t border-gray-200/50 md:hidden overflow-hidden transition-all duration-500 ease-out ${
-            mobileMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+  className={`bg-white/80 backdrop-blur-md border-t border-gray-200/50 md:hidden overflow-hidden transition-all duration-500 ease-out ${
+    mobileMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+  }`}
+>
+  <div
+    className={`p-6 pb-24 h-screen overflow-y-auto transition-all duration-300 delay-100 ${
+      mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+    }`}
+  >
+    {/* Mobile Navigation Links */}
+    <nav aria-label="Mobile" className="space-y-4">
+      <Link
+        href="/marketplace"
+        className="block py-4 px-2 text-lg md:text-xl font-semibold text-gray-900 hover:text-sky-600 transition-colors tracking-wide leading-relaxed rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+      >
+        Marketplace
+      </Link>
+
+      <Link
+        href="/vendors"
+        className="block py-4 px-2 text-lg md:text-xl font-semibold text-gray-900 hover:text-sky-600 transition-colors tracking-wide leading-relaxed rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+      >
+        Vendors
+      </Link>
+
+      <div>
+        <button
+          onClick={() => setHelpOpen(!helpOpen)}
+          className="flex items-center justify-between w-full py-4 px-2 text-lg md:text-xl font-semibold text-gray-900 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+          aria-expanded={helpOpen}
+        >
+          <span>Help Center</span>
+          <ChevronDown size={18} className={`transition-transform duration-200 ${helpOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        <div
+          className={`overflow-hidden transition-all duration-300 ${
+            helpOpen ? "max-h-[28rem] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <div
-            className={`text-sm lg:text-md p-4 pb-20 h-screen overflow-y-auto transition-all duration-300 delay-100 ${
-              mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
-            }`}
-          >
-            {/* Mobile Navigation Links */}
-            
-            <Link href="/marketplace" className="block py-2 transition-colors hover:text-blue-600 text-gray-900">
-              Marketplace
-            </Link>
-            <Link href="/vendors" className="block py-2 transition-colors hover:text-blue-600 text-gray-900">
-              Vendors
-            </Link>
-            <button
-              onClick={() => setHelpOpen(!helpOpen)}
-              className="flex items-center justify-between w-full py-2 text-gray-900"
-            >
-              <span>Help Center</span>
-              <ChevronDown size={16} className={`transition-transform duration-200 ${helpOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            <div
-              className={`overflow-hidden transition-all duration-300 ${
-                helpOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-              }`}
-            >
-              <div className="pl-4 space-y-2 mb-6 pt-2">
-                {helpCategories.map((cat, index) => (
-                  <div
-                    key={cat.title}
-                    className={`transition-all duration-200 ${
-                      helpOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
-                    }`}
-                    style={{ transitionDelay: `${100 + index * 50}ms` }}
-                  >
-                    <h4 className="font-semibold mt-2 text-gray-900">{cat.title}</h4>
-                    <ul className="space-y-1 text-sm">
-                      {cat.links.map((link) => (
-                        <li>
-                          <Link href={link.url} className="text-gray-700 hover:text-blue-600 transition-colors">
-                            {link.title}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+          <div className="pl-3 space-y-4 mb-6 pt-2">
+            {helpCategories.map((cat, index) => (
+              <div
+                key={cat.title}
+                className={`transition-all duration-200 ${helpOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
+                style={{ transitionDelay: `${100 + index * 50}ms` }}
+              >
+                <h4 className="font-semibold mt-2 text-gray-900 text-base md:text-lg">{cat.title}</h4>
+                <ul className="space-y-2">
+                  {cat.links.map((link) => (
+                    <li key={link.title}>
+                      <Link
+                        href={link.url}
+                        className="text-gray-700 hover:text-sky-600 transition-colors text-base md:text-lg block py-1"
+                      >
+                        {link.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
-
-            {/* Mobile Login/Signup Buttons */}
-            <div className="text-sm lg:text-md mt-6 space-y-2">
-              <Link
-                href="/login"
-                className="block py-2 px-4 border border-blue-600 text-blue-600 text-center rounded-full hover:bg-white/80 transition-colors duration-200 backdrop-blur-md bg-white/60"
-              >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className="block py-2 px-4 bg-blue-500 text-white text-center rounded-full hover:bg-blue-600 transition-colors duration-200"
-              >
-                Sign Up
-              </Link>
-            </div>
+            ))}
           </div>
         </div>
+      </div>
+    </nav>
+
+    {/* Mobile Login/Signup Buttons */}
+    <div className="mt-8 space-y-4">
+      <Link
+        href="/login"
+        className="block py-3 px-6 border border-sky-600 text-sky-600 text-center rounded-full hover:bg-white/90 transition-colors duration-200 backdrop-blur-md bg-white/70 font-semibold text-base shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+      >
+        Login
+      </Link>
+
+      <Link
+        href="/signup"
+        className="block py-3 px-6 bg-sky-600 text-white text-center rounded-full hover:bg-sky-700 transition-colors duration-200 font-semibold text-base shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+      >
+        Sign Up
+      </Link>
+    </div>
+  </div>
+</div>
+
       </nav>
     </>
   )

@@ -188,12 +188,15 @@ export default function FeaturedProducts() {
 
   return (
         
-    <section className="space-y-8  bg-gray-100 min-h-screen rounded-xl">
-<div className=" mx-3xl">
-  <h1 className="m-10 p-10 text-2xl sm:text-3xl font-semibold text-gray-900 px-4 sm:px-0">
+    <section className="space-y-8 mt-20 bg-gray-100 min-h-screen rounded-xl">
+              <div className="max-w-7xl mx-auto px-4">
+
+          <div className="mx-7xl">
+        <h1 className="p-10 text-4xl sm:text-6xl font-bold text-gray-900 px-4 sm:px-0">
           Featured <span className="text-blue-500">Product</span>
         </h1>
-</div>
+      </div>
+      </div>
 
 
       <div className="relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>

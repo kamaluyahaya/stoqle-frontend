@@ -48,7 +48,7 @@ export default function BenefitsSection() {
   ]
 
   return (
-    <section className="relative bg-gradient-to-br from-slate-50 via-white to-blue-50 py-20 overflow-hidden">
+    <section className="relative bg-gradient-to-br from-slate-50 via-white to-blue-50 py-10 overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full opacity-20 animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-slate-100 rounded-full opacity-30 animate-pulse delay-1000"></div>
@@ -73,12 +73,14 @@ export default function BenefitsSection() {
         </div>
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-4">
+      <div className="relative max-w-7xl mx-auto px-4">
         <div
-          className={`mx-8 lg:mx-0 text-center mb-8 transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`mx-8 lg:mx-0 mb-8 transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
-          <div className="relative inline-block">
-            <h2 className="text-2xl font-bold text-gray-900 mb-3 relative z-10">Why Choose Us</h2>
+          <div className="mx-6xl">
+            <h1 className=" p-10 text-4xl sm:text-4xl font-bold text-gray-900 px-4 sm:px-0">
+              Why Choosing <span className="text-blue-500"> Stoqle</span>
+            </h1>
           </div>
           
         </div>

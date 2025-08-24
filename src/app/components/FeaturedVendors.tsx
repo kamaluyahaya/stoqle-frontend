@@ -163,12 +163,11 @@ export default function FeaturedVendors() {
 
   return (
     <section className="px-0 py-16 bg-gray-50">
-      <div className="text-center mb-12">
-        <h2 className="text-lg lg:text-xl font-bold text-slate-900 mb-4 tracking-tight">
-          Discover Our Top-Rated Vendors
-        </h2>
-      </div>
-
+      <div className="mx">
+            <h1 className="m-10 p-10 text-4xl sm:text-4xl font-bold text-gray-900 px-4 sm:px-0">
+              Meet verified <span className="text-blue-500"> Vendors</span>
+            </h1>
+          </div>
       <div
         className="relative"
         onMouseEnter={() => setIsHovered(true)}

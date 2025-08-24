@@ -232,18 +232,13 @@ export default function StorePageClient(props: any) {
 
         <div className="mt-6 mb-6">
           <div className="flex items-center gap-4">
-            <button onClick={() => router.back()} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-100 bg-white/60">
-              <ArrowLeft size={16} /> Back
-            </button>
-
             <div className="flex-1">
               <h1 className="text-2xl font-bold truncate">{store?.store_name || vendor?.business_name || "Store"}</h1>
               <p className="text-sm text-slate-500 mt-1">{vendor?.business_category} • {vendor?.phone}</p>
             </div>
 
             <div className="flex items-center gap-3">
-              <Badge>{vendor?.status ?? "—"}</Badge>
-              <a href={`tel:${vendor?.phone || ""}`} className="text-sm px-4 py-2 rounded-lg border border-gray-100">Call</a>
+              
               <button onClick={() => setIsOpen(true)} className="text-sm px-4 py-2 rounded-lg border border-gray-100">View vendor</button>
             </div>
           </div>
@@ -256,6 +251,8 @@ export default function StorePageClient(props: any) {
                 className="object-cover w-full h-full"
               />
             </div>
+            <Badge>{vendor?.status ?? "—"}</Badge>
+              <a href={`tel:${vendor?.phone || ""}`} className="text-sm px-4 py-2 rounded-lg border border-gray-100">Call</a>
 
             <div className="flex-1">
               <p className="text-sm text-slate-600">{store?.description || vendor?.business_address || "No description or address provided."}</p>
@@ -298,14 +295,13 @@ export default function StorePageClient(props: any) {
           </div>
 
           <div className="mt-8 flex justify-center">
-            <button className="px-6 py-3 rounded-2xl border border-gray-100">Load more</button>
+            <button className="px-6 py-3 rounded-2xl border border-gray-100">-The end-</button>
           </div>
         </main>
 
         <VendorModal vendor={vendor} isOpen={isOpen} onClose={() => setIsOpen(false)} />
         <ProductModal product={selectedProduct} vendor={vendor} isOpen={productModalOpen} onClose={closeProductModal} />
 
-        <footer className="max-w-7xl mx-auto mt-12 text-center text-sm text-slate-500">© {new Date().getFullYear()} Stoqle — Crafted by KSOFT Technova</footer>
       </div>
 
       <FeaturedVendors />

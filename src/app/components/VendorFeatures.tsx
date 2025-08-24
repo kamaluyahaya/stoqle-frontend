@@ -29,12 +29,17 @@ export default function VendorFeatures() {
 
   return (
     <main>
-      <section className="py-16 bg-gray-50">
+      <section className="py-6 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center mb-12">
-                <h2 className="text-lg lg:text-xl font-bold text-slate-900 mb-4 tracking-tight">Your Benefits at a Glance</h2>
-              
-            </div>
+
+          <div className="mx-7xl">
+  <h1 className=" p-10 text-4xl sm:text-6xl font-bold text-gray-900 px-4 sm:px-0">
+    What We <span className="text-blue-500"> Offer</span>
+  </h1>
+</div>
+
+
+            
           <div className="mx-8 lg:mx-0 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feature, index) => (
               <div

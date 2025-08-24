@@ -139,37 +139,140 @@ useEffect(() => {
 }, [selected]);
 
   
+// paste into your component file (React + Next.js)
+// Replace your existing printReceipt with this function and include the helper functions below.
+
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
+  }
+  return btoa(binary);
+}
+
+function loadQzScriptOnce(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') return reject(new Error('Not in browser'));
+    // already loaded
+    if ((window as any).qz) return resolve();
+
+    // avoid adding duplicate script tags
+    if (document.querySelector('script[data-qz="true"]')) {
+      // wait until window.qz appears
+      const waitFor = () => {
+        if ((window as any).qz) return resolve();
+        setTimeout(() => {
+          if ((window as any).qz) resolve();
+          else waitFor();
+        }, 100);
+      };
+      return waitFor();
+    }
+
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://unpkg.com/qz-tray/qz-tray.js';
+    s.setAttribute('data-qz', 'true');
+    s.onload = () => {
+      // qz may still initialize; wait a short time
+      const start = Date.now();
+      const maxWait = 5000;
+      const poll = () => {
+        if ((window as any).qz) return resolve();
+        if (Date.now() - start > maxWait) return resolve(); // resolve anyway; connection will fail later if missing
+        setTimeout(poll, 100);
+      };
+      poll();
+    };
+    s.onerror = () => reject(new Error('Failed to load qz-tray.js'));
+    document.body.appendChild(s);
+  });
+}
+
+async function waitForQz(timeout = 5000) {
+  const start = Date.now();
+  while (!(window as any).qz) {
+    if (Date.now() - start > timeout) throw new Error('qz not available');
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return (window as any).qz;
+}
+
 const printReceipt = async () => {
-  const sale = saleData ?? selected ?? null;
-  const saleId = sale?.sale_id ?? sale?.id ?? sale?.reference_no ?? selected?.sale_id;
+  const sale = saleData?.sale ?? saleData ?? null;
+  const saleId = sale?.sale_id ?? sale?.id ?? sale?.reference_no;
 
   if (!saleId) {
     alert('No sale found to print');
     return;
   }
-    try {
-      setPrintingLoading(true);
-      const token = JSON.parse(localStorage.getItem("token") || "null");
-  
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/print-receipt`;
-  
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        body: JSON.stringify({ sale }), // send the sale data here
-      });
-  
-      const data = await res.json();
-      toast(data.message);
-    } catch (err: any) {
-      alert("Error printing receipt: " + err.message);
-    } finally {
-      setPrintingLoading(false);
+
+  try {
+    setPrintingLoading(true);
+
+    const token = JSON.parse(localStorage.getItem('token') || 'null');
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/receipt-pdf`;
+
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+      body: JSON.stringify({ sale }),
+    });
+
+    // If server prints on the server and returns JSON:
+    const contentType = resp.headers.get('content-type') || '';
+
+    if (contentType.includes('application/pdf')) {
+      // Server returned a PDF -> print locally via QZ Tray
+      const arrayBuffer = await resp.arrayBuffer();
+      const pdfBase64 = arrayBufferToBase64(arrayBuffer);
+
+      // Load QZ script (idempotent)
+      await loadQzScriptOnce();
+
+      // Wait for window.qz to exist (short timeout)
+      const qz = await waitForQz(5000);
+
+      // connect
+      try {
+        await qz.websocket.connect();
+      } catch (err) {
+        // If connect fails, provide helpful message
+        throw new Error('Could not connect to QZ Tray. Make sure QZ Tray is installed and running, and that you trusted the connection prompt.');
+      }
+
+      try {
+        // choose printer (default); you can replace with qz.printers.find("Your Printer Name")
+        const printerName = await qz.printers.getDefault();
+        const config = qz.configs.create(printerName);
+
+        // Print the PDF (base64)
+        const printData = [{ type: 'pdf', format: 'base64', data: pdfBase64 }];
+        await qz.print(config, printData);
+
+        toast('Printed successfully to local printer');
+      } finally {
+        try { await qz.websocket.disconnect(); } catch (e) { /* ignore */ }
+      }
+
+    } else {
+      // Assume JSON response (your current server-side printing)
+      const data = await resp.json();
+      toast(data.message || 'Server response received');
     }
-  };
+  } catch (err: any) {
+    console.error('Print error:', err);
+    alert('Error printing receipt: ' + (err?.message || String(err)));
+  } finally {
+    setPrintingLoading(false);
+  }
+};
 
   const downloadPdfReceipt = async () => {
           setLoading(true);
