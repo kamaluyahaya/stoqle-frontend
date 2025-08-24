@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 type Payment = { id: string | number; method: string; amount: number; reference?: string | null };
-declare global {
-  interface Window {
-    qz: any;
-  }
-}
+
 type Props = {
   items: CartItem[];
   payments: Payment[];
@@ -212,175 +208,113 @@ function loadQzScriptOnce(): Promise<void> {
   });
 }
 
-function safeLog(...args: any[]) { try { console.log('[printReceipt]', ...args); } catch {} }
-
-function timeoutPromise<T>(ms: number, message = 'Operation timed out'): Promise<T> {
-  return new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms));
-}
-
-function escapeHtmlForPrint(s: string = '') {
-  return (s + '').replace(/&/g, '&amp;')
-                  .replace(/</g, '&lt;')
-                  .replace(/>/g, '&gt;')
-                  .replace(/\n/g, '<br/>');
-}
-
-
-async function waitForQz(timeout = 5000): Promise<any> {
+async function waitForQz(timeout = 5000) {
   const start = Date.now();
   while (!(window as any).qz) {
-    if (Date.now() - start > timeout) {
-      throw new Error('qz not available');
-    }
-    // small sleep
-    await new Promise((res) => setTimeout(res, 100));
+    if (Date.now() - start > timeout) throw new Error('qz not available');
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(r => setTimeout(r, 100));
   }
   return (window as any).qz;
 }
 
-async function connectWithTimeout(qz: any, ms = 8000) {
-  safeLog('connecting to qz (with timeout)', ms);
-  // Promise.race: either connect resolves or timeout rejects
-  return Promise.race([qz.websocket.connect(), timeoutPromise(ms, 'qz.websocket.connect() timed out')]);
-}
-
-async function safeDisconnect() {
-  try {
-    if ((window as any).qz && (window as any).qz.websocket && (window as any).qz.websocket.disconnect) {
-      await (window as any).qz.websocket.disconnect();
-      safeLog('qz disconnected');
-    }
-  } catch (e) {
-    safeLog('safeDisconnect caught', e);
-  }
-}
-
-// --- robust printReceipt replacement ---
 const printReceipt = async () => {
   const sale = saleData?.sale ?? saleData ?? null;
-  if (!sale) {
+  const saleId = sale?.sale_id ?? sale?.id ?? sale?.reference_no;
+
+  if (!saleId) {
     alert("No sale found to print");
     return;
   }
-    let lines: string[] = [];
 
   try {
     setPrintingLoading(true);
-    toast('Starting print job...', { position: 'top-center' });
-    safeLog('print start', { sale });
 
-    // load qz script (keep your existing loader)
+    const token = JSON.parse(localStorage.getItem("token") || "null");
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/receipt-pdf`;
+
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+      body: JSON.stringify({ sale }),
+    });
+
+    const contentType = resp.headers.get("content-type") || "";
+
+    if (!contentType.includes("application/pdf")) {
+      const data = await resp.json();
+      toast(data.message || "Server response received");
+      return;
+    }
+
+    const arrayBuffer = await resp.arrayBuffer();
+    const pdfBase64 = arrayBufferToBase64(arrayBuffer);
+
+    // Load QZ Tray
     await loadQzScriptOnce();
-    const qz = await waitForQz(5000); // will throw if not available
+    const qz = await waitForQz(5000);
 
-    // security promises (same as you have)
+    // QZ Tray security
     qz.security.setCertificatePromise(() =>
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/cert`).then(res => res.text())
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/cert`).then((res) =>
+        res.text()
+      )
     );
-    qz.security.setSignaturePromise((toSign: string) =>
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/sign`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
+
+    qz.security.setSignaturePromise(async (toSign: string): Promise<string> => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
         body: toSign,
-      }).then(res => res.text())
-    );
+      });
+      return response.text();
+    });
 
-    // connect with timeout so it doesn't hang forever
-    await connectWithTimeout(qz, 8000);
-    safeLog('qz websocket connected', qz?.websocket?.isActive ? qz.websocket.isActive() : 'unknown');
-
-    // get default printer (will throw if none)
-    const printerName = await qz.printers.getDefault();
-    if (!printerName) {
-      throw new Error('No default printer found. Check QZ Tray app is running and a default printer is selected.');
-    }
-    safeLog('printerName', printerName);
-    const config = qz.configs.create(printerName);
-
-    // Quick sanity print (short text) to confirm connection & printer
+    // Connect
     try {
-      await qz.print(config, [{ type: 'raw', format: 'plain', data: 'TEST PRINT\n\n' }]);
-      safeLog('sanity test printed');
-    } catch (errSanity) {
-      safeLog('sanity print failed', errSanity);
-      // Not fatal — continue to attempt full receipt print, but notify user
-      toast.error('Quick test print failed. Check the printer and QZ Tray app.', { position: 'top-center' });
+      await qz.websocket.connect();
+    } catch {
+      throw new Error(
+        "Could not connect to QZ Tray. Make sure it is installed, running, and trusted."
+      );
     }
 
-    // Build ESC/POS receipt (your existing logic)
-    // const lines: string[] = [];
-    lines.push("\x1B\x40"); // Initialize
-    lines.push((sale.business_name || "STORE NAME").toUpperCase() + "\n");
-    if (sale.email) lines.push(sale.email + "\n");
-    lines.push("Date: " + (sale.created_at ? new Date(sale.created_at).toLocaleString() : "") + "\n");
-    lines.push("Ref: " + (sale.reference_no || "") + "\n");
-    lines.push("------------------------------\n");
-
-    for (const item of sale.items || []) {
-      const qty = item.quantity ?? 0;
-      const price = (item.line_total ?? ((item.unit_price ?? 0) * qty)).toFixed(2);
-      const name = String(item.name || "");
-      const itemLine = `${name} ${qty} x ${price}`;
-      lines.push(itemLine + "\n");
-    }
-
-    lines.push("------------------------------\n");
-    lines.push(`Subtotal: ${Number(sale.subtotal ?? 0).toFixed(2)}\n`);
-    lines.push(`Discount: ${Number(sale.total_discount ?? 0).toFixed(2)}\n`);
-    lines.push(`TOTAL: ${Number(sale.total ?? 0).toFixed(2)}\n`);
-    const paymentMethod = sale.payment_method || ((sale.payments?.[0])?.method ?? "N/A");
-    const paidAmount = Number(sale.payments?.[0]?.amount ?? sale.total ?? 0).toFixed(2);
-    lines.push(`Paid via: ${paymentMethod} (${paidAmount})\n`);
-    lines.push("\nThank you for shopping with us!\n");
-    lines.push("\x1D\x56\x41"); // Cut
-
-    // Final print (wrap in try/catch to show clear error)
-    await qz.print(config, [{ type: 'raw', format: 'plain', data: lines.join('') }]);
-    toast.success('Printed successfully', { position: 'top-center' });
-    safeLog('full receipt printed');
-  } catch (err: any) {
-    safeLog('Print error caught', err);
-    // helpful user-facing messages
-    if (err?.message?.includes('timed out') || String(err).includes('qz not available')) {
-      toast.error('Unable to connect to QZ Tray. Is the QZ Tray app running on this machine? (native app required)', { position: 'top-center' });
-    } else {
-      toast.error('Error printing receipt: ' + (err?.message || String(err)), { position: 'top-center' });
-    }
-
-    // fallback: open printable window so user can Save as PDF / print manually
     try {
-      const html = `
-        <html>
-          <head>
-            <title>Receipt</title>
-            <style>body{font-family:monospace;white-space:pre-wrap;}</style>
-          </head>
-          <body>
-            ${escapeHtmlForPrint(lines?.join('') || 'Receipt')}
-          </body>
-        </html>`;
-      const w = window.open('', '_blank', 'noopener,noreferrer');
-      if (w) {
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
-        w.focus();
-        // give it a moment, then call print
-        setTimeout(() => {
-          try { w.print(); } catch (e) { safeLog('fallback print failed', e); }
-        }, 400);
-      } else {
-        alert('Unable to open print window. Please allow popups or print manually.');
+      // Get default printer
+      const printerName = await qz.printers.getDefault();
+      console.log("Default printer:", printerName);
+
+      if (!printerName) {
+        throw new Error("No default printer found. Please select a default printer.");
       }
-    } catch (fallbackErr) {
-      safeLog('fallback generation failed', fallbackErr);
+
+      const config = qz.configs.create(printerName, {
+        orientation: "portrait",
+      });
+
+      // Test print (optional, ensures printer works)
+      await qz.print(config, [{ type: "raw", format: "plain", data: "Test print\n" }]);
+
+      // Print PDF
+      const printData = [{ type: "pdf", format: "base64", data: pdfBase64 }];
+      await qz.print(config, printData);
+
+      toast("Printed successfully to local printer");
+    } finally {
+      try {
+        await qz.websocket.disconnect();
+      } catch {}
     }
+  } catch (err: any) {
+    console.error("Print error:", err);
+    alert("Error printing receipt: " + (err?.message || String(err)));
   } finally {
-    await safeDisconnect();
     setPrintingLoading(false);
   }
 };
-
 
 
 
