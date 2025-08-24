@@ -253,25 +253,45 @@ const printReceipt = async () => {
     const arrayBuffer = await resp.arrayBuffer();
     const pdfBase64 = arrayBufferToBase64(arrayBuffer);
 
-    // Load QZ Tray
-    await loadQzScriptOnce();
-    const qz = await waitForQz(5000);
+   // Load QZ Tray
+await loadQzScriptOnce();
+const qz = await waitForQz(5000);
 
-    // QZ Tray security
-    qz.security.setCertificatePromise(() =>
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/cert`).then((res) =>
-        res.text()
-      )
-    );
-
-    qz.security.setSignaturePromise(async (toSign: string): Promise<string> => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: toSign,
-      });
-      return response.text();
+// Certificate
+qz.security.setCertificatePromise(() => {
+  console.log("Fetching qz certificate from server...");
+  return fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/cert`)
+    .then((res) => res.text())
+    .then((cert) => {
+      console.log("Certificate fetched length:", cert?.length ?? 0);
+      if (!cert || !cert.includes("BEGIN CERTIFICATE")) {
+        console.warn("Certificate appears invalid");
+      }
+      return cert;
     });
+});
+
+// Must match server signing
+qz.security.setSignatureAlgorithm("SHA256");
+
+// Signature
+qz.security.setSignaturePromise(async (toSign: string): Promise<string> => {
+  console.log("Signing request toSign length:", toSign.length);
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/sign`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: toSign,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "<no body>");
+    console.error("Sign endpoint responded non-OK:", response.status, text);
+    throw new Error("Sign endpoint failure");
+  }
+  const signature = await response.text();
+  console.log("Signature returned length:", signature.length);
+  return signature;
+});
 
     // Connect
     try {
