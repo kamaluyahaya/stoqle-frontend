@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 type Payment = { id: string | number; method: string; amount: number; reference?: string | null };
-
+declare global {
+  interface Window {
+    qz: any;
+  }
+}
 type Props = {
   items: CartItem[];
   payments: Payment[];
@@ -190,7 +194,7 @@ function loadQzScriptOnce(): Promise<void> {
 
     const s = document.createElement('script');
     s.async = true;
-    s.src = 'https://unpkg.com/qz-tray/qz-tray.js';
+    s.src = '/js/qz-tray.js';
     s.setAttribute('data-qz', 'true');
     s.onload = () => {
       // qz may still initialize; wait a short time
@@ -220,76 +224,87 @@ async function waitForQz(timeout = 5000) {
 
 const printReceipt = async () => {
   const sale = saleData?.sale ?? saleData ?? null;
-  const saleId = sale?.sale_id ?? sale?.id ?? sale?.reference_no;
-
-  if (!saleId) {
-    alert('No sale found to print');
+  if (!sale) {
+    alert("No sale found to print");
     return;
   }
 
   try {
     setPrintingLoading(true);
 
-    const token = JSON.parse(localStorage.getItem('token') || 'null');
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/receipt-pdf`;
+    // Load QZ Tray
+    await loadQzScriptOnce();
+    const qz = await waitForQz(5000);
 
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-      body: JSON.stringify({ sale }),
+    // Security setup
+    qz.security.setCertificatePromise(() =>
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/cert`).then(res => res.text())
+    );
+
+    qz.security.setSignaturePromise(async (toSign: string) => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: toSign,
+      });
+      return res.text();
     });
 
-    // If server prints on the server and returns JSON:
-    const contentType = resp.headers.get('content-type') || '';
+    // Connect to QZ Tray
+    await qz.websocket.connect();
 
-    if (contentType.includes('application/pdf')) {
-      // Server returned a PDF -> print locally via QZ Tray
-      const arrayBuffer = await resp.arrayBuffer();
-      const pdfBase64 = arrayBufferToBase64(arrayBuffer);
+    // Get default printer (XP-80C)
+    const printerName = await qz.printers.getDefault();
+    if (!printerName) throw new Error("No default printer found.");
+    const config = qz.configs.create(printerName);
 
-      // Load QZ script (idempotent)
-      await loadQzScriptOnce();
+    // Build ESC/POS receipt
+    const lines: string[] = [];
+    lines.push("\x1B\x40"); // Initialize printer
+    lines.push((sale.business_name || "STORE NAME").toUpperCase() + "\n");
+    if (sale.email) lines.push(sale.email + "\n");
+    lines.push("Date: " + (sale.created_at ? new Date(sale.created_at).toLocaleString() : "") + "\n");
+    lines.push("Ref: " + (sale.reference_no || "") + "\n");
+    lines.push("------------------------------\n");
 
-      // Wait for window.qz to exist (short timeout)
-      const qz = await waitForQz(5000);
-
-      // connect
-      try {
-        await qz.websocket.connect();
-      } catch (err) {
-        // If connect fails, provide helpful message
-        throw new Error('Could not connect to QZ Tray. Make sure QZ Tray is installed and running, and that you trusted the connection prompt.');
-      }
-
-      try {
-        // choose printer (default); you can replace with qz.printers.find("Your Printer Name")
-        const printerName = await qz.printers.getDefault();
-        const config = qz.configs.create(printerName);
-
-        // Print the PDF (base64)
-        const printData = [{ type: 'pdf', format: 'base64', data: pdfBase64 }];
-        await qz.print(config, printData);
-
-        toast('Printed successfully to local printer');
-      } finally {
-        try { await qz.websocket.disconnect(); } catch (e) { /* ignore */ }
-      }
-
-    } else {
-      // Assume JSON response (your current server-side printing)
-      const data = await resp.json();
-      toast(data.message || 'Server response received');
+    // Items
+    for (const item of sale.items || []) {
+      const qty = item.quantity ?? 0;
+      const price = (item.line_total ?? (item.unit_price ?? 0) * qty).toFixed(2);
+      const name = String(item.name || "");
+      // Fit name + qty + price into ~32 chars (adjust per printer width)
+      const itemLine = `${name} ${qty} x ${price}`;
+      lines.push(itemLine + "\n");
     }
+
+    lines.push("------------------------------\n");
+
+    // Summary
+    lines.push(`Subtotal: ${Number(sale.subtotal ?? 0).toFixed(2)}\n`);
+    lines.push(`Discount: ${Number(sale.total_discount ?? 0).toFixed(2)}\n`);
+    lines.push(`TOTAL: ${Number(sale.total ?? 0).toFixed(2)}\n`);
+    const paymentMethod = sale.payment_method || ((sale.payments?.[0])?.method ?? "N/A");
+    const paidAmount = Number(sale.payments?.[0]?.amount ?? sale.total ?? 0).toFixed(2);
+    lines.push(`Paid via: ${paymentMethod} (${paidAmount})\n`);
+
+    lines.push("\nThank you for shopping with us!\n");
+    lines.push("\x1D\x56\x41"); // Cut paper
+
+    // Print receipt
+    await qz.print(config, [{ type: "raw", format: "plain", data: lines.join("") }]);
+
+    toast("Printed successfully to XP-80C printer");
   } catch (err: any) {
-    console.error('Print error:', err);
-    alert('Error printing receipt: ' + (err?.message || String(err)));
+    console.error("Print error:", err);
+    alert("Error printing receipt: " + (err?.message || String(err)));
   } finally {
+    try { await window.qz.websocket.disconnect(); } catch {}
     setPrintingLoading(false);
   }
 };
+
+
+
 
 
   
