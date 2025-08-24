@@ -54,9 +54,9 @@ export default function HeroSection() {
       {/* Content card */}
       <div className="relative z-10 mx-auto w-full max-w-7xl">
         <div className="text-left">
-          <div className=" ">
+          <div className="p-6 md:p-10 lg:p-5">
             <h1
-                className="text-[60px] md:text-[80px] lg:text-[100px] font-light mb-3 md:mb-6 leading-tight tracking-tight text-white"
+                className="text-[40px] md:text-[80px] lg:text-[100px] font-light mb-3 md:mb-6 leading-tight tracking-tight text-white"
               >
                 Be the next
                 <br /> {/* ✅ this ensures the next text goes to a new line */}
