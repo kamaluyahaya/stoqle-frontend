@@ -231,7 +231,7 @@ const printReceipt = async () => {
     setPrintingLoading(true);
 
     const token = JSON.parse(localStorage.getItem('token') || 'null');
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/print-receipt`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/receipt-pdf`;
 
     const resp = await fetch(url, {
       method: 'POST',
