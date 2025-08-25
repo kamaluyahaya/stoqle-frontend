@@ -222,7 +222,55 @@ export default function FeaturedProducts() {
           <ChevronRight className="w-5 h-5" />
         </button>
 
-        {loading && <div className="py-12 text-center">Loading products...</div>}
+        {/* ---------- Tailwind-only Product Skeletons (no external CSS) ---------- */}
+{loading && (
+  <div
+    className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 px-12"
+    aria-busy="true"
+    aria-label="Loading products"
+  >
+    {Array.from({ length: duplicatedProducts?.length || 4 }).map((_, i) => (
+      <div
+        key={`skeleton-${i}`}
+        className="relative bg-white rounded-3xl shadow-md overflow-hidden flex flex-col flex-shrink-0 w-80 animate-pulse"
+        role="status"
+      >
+        {/* Category Tag Placeholder */}
+        <div className="absolute top-4 left-4 z-10">
+          <div className="h-6 w-20 rounded-full bg-gray-200/80" />
+        </div>
+
+        {/* Image Skeleton */}
+        <div className="relative overflow-hidden bg-white">
+          <div className="w-full h-48 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/6 to-transparent opacity-0 transition-opacity duration-300" />
+        </div>
+
+        {/* Body */}
+        <div className="p-6 flex-1 flex flex-col space-y-3">
+          <div className="h-4 w-3/4 rounded-md bg-gray-200" />
+          <div className="h-3 w-1/2 rounded-md bg-gray-200" />
+
+          <div className="mb-2">
+            <div className="flex items-baseline gap-3">
+              <div className="h-6 w-24 rounded-md bg-gray-200" />
+              <div className="h-4 w-16 rounded-md bg-gray-200" />
+            </div>
+            <div className="mt-1">
+              <div className="h-3 w-24 rounded-md bg-gray-200" />
+            </div>
+          </div>
+
+          {/* CTA button placeholder */}
+          <div className="mt-auto">
+            <div className="h-10 rounded-full w-full bg-gray-200" />
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
         {error && <div className="py-12 text-center text-red-600">{error}</div>}
 
         {!loading && !error && (
