@@ -198,8 +198,47 @@ export default function FeaturedVendors() {
           <ChevronRight className="w-5 h-5" />
         </button>
 
-        {/* Loading and error states */}
-        {loading && <div className="py-12 text-center">Loading vendors...</div>}
+        {/* Loading skeletons for vendors */}
+{loading && (
+  <div
+    className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 px-12"
+    aria-busy="true"
+    aria-label="Loading vendors"
+  >
+    {Array.from({ length: vendors?.length || 4 }).map((_, i) => (
+      <div
+        key={`vendor-skeleton-${i}`}
+        className="relative bg-white rounded-2xl shadow-md overflow-hidden flex flex-col flex-shrink-0 w-80 animate-pulse"
+        role="status"
+      >
+        {/* Badge Placeholder */}
+        <div className="absolute top-4 left-4 z-10">
+          <div className="h-6 w-20 rounded-full bg-gray-200/80" />
+        </div>
+
+        {/* Image Skeleton */}
+        <div className="relative overflow-hidden">
+          <div className="w-full h-48 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 transition-opacity duration-300" />
+        </div>
+
+        {/* Body */}
+        <div className="p-6 flex-1 flex flex-col space-y-3">
+          <div className="h-4 w-3/4 rounded-md bg-gray-200" />
+          <div className="h-3 w-full rounded-md bg-gray-200" />
+          <div className="h-3 w-2/3 rounded-md bg-gray-200" />
+          <div className="h-3 w-1/2 rounded-md bg-gray-200 mb-4" />
+
+          {/* CTA button placeholder */}
+          <div className="mt-auto">
+            <div className="h-10 rounded-full w-full bg-gray-200" />
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
         {error && <div className="py-12 text-center text-red-600">{error}</div>}
 
         {!loading && !error && (
