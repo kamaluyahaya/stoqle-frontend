@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import WhyWeBuildModal from "./whywebuildModal"
+import { Info } from "lucide-react"
 
 const TEXTS = [
   "Top Vendor",
@@ -127,7 +128,7 @@ export default function HeroSection() {
               </AnimatePresence>
             </h1>
 
-            <p className="mb-6 text-lg md:text-lg text-white/85 max-w-2xl">
+            <p className="mb-6 mt-4 text-lg md:text-lg text-white/85 max-w-2xl">
               Sell with Insight. Grow with Speed. Manage with Ease.
             </p>
 
@@ -144,13 +145,14 @@ export default function HeroSection() {
 
               {/* Right aligned button that opens modal */}
               
-              <button
-                type="button"
-                onClick={() => setShowModal(true)}
-                className="inline-flex items-center text-sm md:text-base text-white/80 hover:text-white transition"
-              >
-                Why we build Stoqle
-              </button>
+             <button
+                  type="button"
+                  onClick={() => setShowModal(true)}
+                  className="inline-flex items-center border p-3 rounded-4xl gap-2 text-sm md:text-base text-white/80 hover:text-white transition"
+                >
+                  <Info className="w-4 h-4 md:w-5 md:h-5" />
+                  Why we build Stoqle
+                </button>
             </div>
           </div>
         </div>
