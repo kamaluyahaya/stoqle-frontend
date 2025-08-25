@@ -127,8 +127,8 @@ export default function HeroSection() {
               </AnimatePresence>
             </h1>
 
-            <p className="mb-6 text-lg md:text-lg text-white/85 max-w-lg">
-              Reach new customers and grow your business in our thriving marketplace.
+            <p className="mb-6 text-lg md:text-lg text-white/85 max-w-2xl">
+              Sell with Insight. Grow with Speed. Manage with Ease.
             </p>
 
             {/* Buttons row: left actions + right "Why we build Stoqle" */}
