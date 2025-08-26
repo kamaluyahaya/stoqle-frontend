@@ -37,7 +37,7 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // allow next static/image, favicon, public uploads, api, and common static assets including video files
-    '/((?!_next/static|_next/image|favicon.ico|public/uploads|.*\\.(?:png|jpg|jpeg|svg|webp|css|js|mp4|webm|ogg|mov|m4v)$|api).*)',
+    // allow static/image, favicon, public uploads, api, signing assets, and common static assets
+    '/((?!_next/static|_next/image|favicon.ico|public/uploads|assets/signing|.*\\.(?:png|jpg|jpeg|svg|webp|css|js|mp4|webm|ogg|mov|m4v)$|api).*)',
   ],
 };
