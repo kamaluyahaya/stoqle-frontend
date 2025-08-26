@@ -141,63 +141,6 @@ useEffect(() => {
   
 // paste into your component file (React + Next.js)
 // Replace your existing printReceipt with this function and include the helper functions below.
-// Put this in the same module where you use qz. Assumes window.qz exists when called.
-function configureQzSigning() {
-  if (typeof window === 'undefined' || !(window as any).qz) {
-    throw new Error('QZ not loaded - call configureQzSigning() after loadQzScriptOnce()/waitForQz()');
-  }
-
-  const qz = (window as any).qz;
-
-  // Use SHA512 for modern QZ versions
-  try {
-    qz.security.setSignatureAlgorithm('SHA512');
-  } catch (e) {
-    // If this fails, it might be an older QZ version — library will fall back.
-    // We don't throw because some environments may not expose this method.
-    // console.warn('Could not set signature algorithm:', e);
-  }
-
-  // Certificate promise: fetch the public certificate text from your API
-  qz.security.setCertificatePromise(() => {
-    return new Promise<string>(async (resolve, reject) => {
-      try {
-        const certUrl = `${process.env.NEXT_PUBLIC_API_URL}/assets/signing/digital-certificate.txt`;
-        const resp = await fetch(certUrl, { cache: 'no-store' });
-        if (!resp.ok) {
-          return reject(new Error(`Failed to fetch certificate: ${resp.status} ${resp.statusText}`));
-        }
-        const txt = await resp.text();
-        if (!txt || txt.trim().length === 0) {
-          return reject(new Error('Certificate response was empty'));
-        }
-        resolve(txt);
-      } catch (err) {
-        reject(new Error('Error fetching certificate: ' + (err as Error).message));
-      }
-    });
-  });
-
-  // Signature promise: when QZ asks to sign a value, request a signature from your backend
-  qz.security.setSignaturePromise((toSign: string) => {
-    return new Promise<string>(async (resolve, reject) => {
-      try {
-        const signUrl = `${process.env.NEXT_PUBLIC_API_URL}/assets/signing/sign-message?request=${encodeURIComponent(toSign)}`;
-        const resp = await fetch(signUrl, { cache: 'no-store' });
-        if (!resp.ok) {
-          const body = await resp.text().catch(() => '');
-          return reject(new Error(`Signature endpoint failed: ${resp.status} ${resp.statusText} ${body}`));
-        }
-        const signature = await resp.text();
-        if (!signature) return reject(new Error('Empty signature returned from server'));
-        resolve(signature);
-      } catch (err) {
-        reject(new Error('Error fetching signature: ' + (err as Error).message));
-      }
-    });
-  });
-}
-
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   let binary = '';
@@ -230,7 +173,7 @@ function loadQzScriptOnce(): Promise<void> {
 
     const s = document.createElement('script');
     s.async = true;
-     s.src = 'https://unpkg.com/qz-tray/qz-tray.js';
+    s.src = 'https://unpkg.com/qz-tray/qz-tray.js';
     s.setAttribute('data-qz', 'true');
     s.onload = () => {
       // qz may still initialize; wait a short time
@@ -295,8 +238,6 @@ const printReceipt = async () => {
 
       // Wait for window.qz to exist (short timeout)
       const qz = await waitForQz(5000);
-
-      configureQzSigning();
 
       // connect
       try {
