@@ -230,7 +230,7 @@ function loadQzScriptOnce(): Promise<void> {
 
     const s = document.createElement('script');
     s.async = true;
-    s.src = 'js/qz-tray.js';
+     s.src = 'https://unpkg.com/qz-tray/qz-tray.js';
     s.setAttribute('data-qz', 'true');
     s.onload = () => {
       // qz may still initialize; wait a short time
