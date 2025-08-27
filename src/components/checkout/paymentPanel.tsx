@@ -108,7 +108,6 @@ export default function PaymentsPanel({
     }
   }
 
-
   const sendReceipt = async (email?: string) => {
   const to = (email || receiptEmail ||  selectedCustomer?.email || '').trim();
   if (!to) {
@@ -218,6 +217,124 @@ async function waitForQz(timeout = 5000) {
   return (window as any).qz;
 }
 
+// const printReceipt = async () => {
+//   const sale = saleData?.sale ?? saleData ?? null;
+//   const saleId = sale?.sale_id ?? sale?.id ?? sale?.reference_no;
+
+//   if (!saleId) {
+//     alert("No sale found to print");
+//     return;
+//   }
+
+//   try {
+//     setPrintingLoading(true);
+
+//     const token = JSON.parse(localStorage.getItem("token") || "null");
+//     const url = `${process.env.NEXT_PUBLIC_API_URL}/api/receipt-pdf`;
+
+//     const resp = await fetch(url, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Authorization: token ? `Bearer ${token}` : "",
+//       },
+//       body: JSON.stringify({ sale }),
+//     });
+
+//     const contentType = resp.headers.get("content-type") || "";
+
+//     if (!contentType.includes("application/pdf")) {
+//       const data = await resp.json();
+//       toast(data.message || "Server response received");
+//       return;
+//     }
+
+//     const arrayBuffer = await resp.arrayBuffer();
+//     const pdfBase64 = arrayBufferToBase64(arrayBuffer);
+
+   // Load QZ Tray
+// await loadQzScriptOnce();
+// const qz = await waitForQz(5000);
+
+// Certificate
+// qz.security.setCertificatePromise(() => {
+//   console.log("Fetching qz certificate from server...");
+//   return fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/cert`)
+//     .then((res) => res.text())
+//     .then((cert) => {
+//       console.log("Certificate fetched length:", cert?.length ?? 0);
+//       if (!cert || !cert.includes("BEGIN CERTIFICATE")) {
+//         console.warn("Certificate appears invalid");
+//       }
+//       return cert;
+//     });
+// });
+
+// Must match server signing
+// qz.security.setSignatureAlgorithm("SHA256");
+
+// // Signature
+// qz.security.setSignaturePromise(async (toSign: string): Promise<string> => {
+//   console.log("Signing request toSign length:", toSign.length);
+//   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/sign`, {
+//     method: "POST",
+//     headers: { "Content-Type": "text/plain" },
+//     body: toSign,
+//   });
+
+//   if (!response.ok) {
+//     const text = await response.text().catch(() => "<no body>");
+//     console.error("Sign endpoint responded non-OK:", response.status, text);
+//     throw new Error("Sign endpoint failure");
+//   }
+//   const signature = await response.text();
+//   console.log("Signature returned length:", signature.length);
+//   return signature;
+// });
+
+    // Connect
+    // try {
+    //   // await qz.websocket.connect();
+    // } catch {
+    //   throw new Error(
+    //     "Could not connect to QZ Tray. Make sure it is installed, running, and trusted."
+    //   );
+    // }
+
+    // try {
+    //   // Get default printer
+    //   const printerName = await qz.printers.getDefault();
+    //   console.log("Default printer:", printerName);
+
+    //   if (!printerName) {
+    //     throw new Error("No default printer found. Please select a default printer.");
+    //   }
+
+    //   const config = qz.configs.create(printerName, {
+    //     orientation: "portrait",
+    //   });
+
+    //   // Test print (optional, ensures printer works)
+    //   await qz.print(config, [{ type: "raw", format: "plain", data: "Test print\n" }]);
+
+    //   // Print PDF
+    //   const printData = [{ type: "pdf", format: "base64", data: pdfBase64 }];
+    //   await qz.print(config, printData);
+
+//       toast("Printed successfully to local printer");
+//     // } finally {
+//     //   try {
+//     //     await qz.websocket.disconnect();
+//     //   } catch {}
+//     // }
+//   } catch (err: any) {
+//     console.error("Print error:", err);
+//     alert("Error printing receipt: " + (err?.message || String(err)));
+//   } finally {
+//     setPrintingLoading(false);
+//   }
+// };
+
 const printReceipt = async () => {
   const sale = saleData?.sale ?? saleData ?? null;
   const saleId = sale?.sale_id ?? sale?.id ?? sale?.reference_no;
@@ -243,7 +360,6 @@ const printReceipt = async () => {
     });
 
     const contentType = resp.headers.get("content-type") || "";
-
     if (!contentType.includes("application/pdf")) {
       const data = await resp.json();
       toast(data.message || "Server response received");
@@ -252,82 +368,32 @@ const printReceipt = async () => {
 
     const arrayBuffer = await resp.arrayBuffer();
     const pdfBase64 = arrayBufferToBase64(arrayBuffer);
+    const qz = await waitForQz(5000);
 
-   // Load QZ Tray
-await loadQzScriptOnce();
-const qz = await waitForQz(5000);
+    // 🔹 Disable security (dev only)
+    qz.security.setCertificatePromise(() => Promise.resolve("unsigned"));
+    qz.security.setSignaturePromise((toSign: string) => Promise.resolve("unsigned"));
 
-// Certificate
-qz.security.setCertificatePromise(() => {
-  console.log("Fetching qz certificate from server...");
-  return fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/cert`)
-    .then((res) => res.text())
-    .then((cert) => {
-      console.log("Certificate fetched length:", cert?.length ?? 0);
-      if (!cert || !cert.includes("BEGIN CERTIFICATE")) {
-        console.warn("Certificate appears invalid");
-      }
-      return cert;
-    });
-});
-
-// Must match server signing
-qz.security.setSignatureAlgorithm("SHA256");
-
-// Signature
-qz.security.setSignaturePromise(async (toSign: string): Promise<string> => {
-  console.log("Signing request toSign length:", toSign.length);
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/qz/sign`, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body: toSign,
-  });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "<no body>");
-    console.error("Sign endpoint responded non-OK:", response.status, text);
-    throw new Error("Sign endpoint failure");
-  }
-  const signature = await response.text();
-  console.log("Signature returned length:", signature.length);
-  return signature;
-});
-
-    // Connect
-    try {
+    // Connect to QZ
+    if (!qz.websocket.isActive()) {
       await qz.websocket.connect();
-    } catch {
-      throw new Error(
-        "Could not connect to QZ Tray. Make sure it is installed, running, and trusted."
-      );
     }
 
-    try {
-      // Get default printer
-      const printerName = await qz.printers.getDefault();
-      console.log("Default printer:", printerName);
-
-      if (!printerName) {
-        throw new Error("No default printer found. Please select a default printer.");
-      }
-
-      const config = qz.configs.create(printerName, {
-        orientation: "portrait",
-      });
-
-      // Test print (optional, ensures printer works)
-      await qz.print(config, [{ type: "raw", format: "plain", data: "Test print\n" }]);
-
-      // Print PDF
-      const printData = [{ type: "pdf", format: "base64", data: pdfBase64 }];
-      await qz.print(config, printData);
-
-      toast("Printed successfully to local printer");
-    } finally {
-      try {
-        await qz.websocket.disconnect();
-      } catch {}
+    // Get default printer
+    const printer = await qz.printers.getDefault();
+    if (!printer) {
+      throw new Error("No default printer found. Please set a default printer.");
     }
+
+    const config = qz.configs.create(printer, { orientation: "portrait" });
+
+    // Print PDF
+    const printData = [{ type: "pdf", format: "base64", data: pdfBase64 }];
+    await qz.print(config, printData);
+
+    toast("Printed successfully to local printer");
+
+    await qz.websocket.disconnect();
   } catch (err: any) {
     console.error("Print error:", err);
     alert("Error printing receipt: " + (err?.message || String(err)));
