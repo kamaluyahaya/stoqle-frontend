@@ -69,13 +69,22 @@ const getIcon = (ok: boolean) =>
   setErrors((prevErrors) => {
     const updatedErrors = { ...prevErrors };
 
-    if (name === "firstName" || name === "lastName") {
-      if (!/^[A-Za-z]{3,}$/.test(value)) {
-        updatedErrors[name] = "Name must be at least 3 letters and no numbers.";
-      } else {
-        delete updatedErrors[name];
-      }
-    }
+if (name === "firstName") {
+  if (!/^[A-Za-z]{3,}$/.test(value)) {
+    updatedErrors[name] = "First name must be at least 3 letters and no numbers.";
+  } else {
+    delete updatedErrors[name];
+  }
+}
+
+if (name === "lastName") {
+  if (!/^[A-Za-z]{2,}(?:\s+[A-Za-z]{2,})*$/.test(value)) {
+    updatedErrors[name] =
+      "Last name must be at least 2 letters per word, no numbers.";
+  } else {
+    delete updatedErrors[name];
+  }
+}
 
     if (name === "phone") {
       if (!/^\d{11,}$/.test(value)) {
@@ -119,11 +128,11 @@ const getIcon = (ok: boolean) =>
       stepErrors.firstName = "ℹ️ Name must be at least 3 letters and no numbers.";
     }
 
-    if (!formData.lastName.trim()) {
-      stepErrors.lastName = "❌ Last name is required";
-    } else if (!/^[A-Za-z]{3,}$/.test(formData.lastName)) {
-      stepErrors.lastName = "❌ Name must be at least 3 letters and no numbers.";
-    }
+   if (!formData.lastName.trim()) {
+  stepErrors.lastName = "❌ Last name is required";
+} else if (!/^[A-Za-z]{2,}(?:\s+[A-Za-z]{2,})*$/.test(formData.lastName)) {
+  stepErrors.lastName = "❌ Each name must be at least 2 letters, no numbers.";
+}
   }
 
   if (step === 1) {
@@ -131,7 +140,7 @@ const getIcon = (ok: boolean) =>
     if (!formData.phone.trim()) {
       stepErrors.phone = "❌ Phone number is required";
     } else if (!/^\d{11,}$/.test(formData.phone)) {
-      stepErrors.phone = "Phone number must be at least 13 digits.";
+      stepErrors.phone = "Phone number must be at least 11 digits.";
     }
     if (!formData.password) stepErrors.password = "Password is required";
   }
