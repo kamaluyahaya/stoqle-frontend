@@ -18,13 +18,13 @@ export default function Home() {
 
       <VendorFeatures />
       
-      <FeaturedProducts />
+      {/* <FeaturedProducts /> */}
 
 
 
       <BenefitsSection />  
 
-      <FeaturedVendors />
+      {/* <FeaturedVendors /> */}
     
 
       <Footer />
