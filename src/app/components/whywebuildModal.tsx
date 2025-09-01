@@ -16,7 +16,7 @@ interface Props {
  * Example names: /images/receipt.jpg, /images/dashboard.png, ...
  */
 const IMAGES = [
-  { src: "/images/receipt.jpg", alt: "Receipt sample" },
+  { src: "/images/receipt2.jpg", alt: "Receipt sample" },
   { src: "/images/dashboard.png", alt: "Dashboard page" },
   { src: "/images/bookkeeping.png", alt: "Bookkeeping page" },
   { src: "/images/inventory.png", alt: "Inventory page" },
