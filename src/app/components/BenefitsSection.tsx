@@ -78,7 +78,7 @@ export default function BenefitsSection() {
           className={`mx-8 lg:mx-0 mb-8 transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
           <div className="mx-6xl">
-            <h1 className=" p-10 text-4xl sm:text-4xl font-bold text-gray-900 px-4 sm:px-0">
+            <h1 className="text-3xl md:text-6xl font-semibold leading-tight">
               Why Choosing <span className="text-blue-500"> Stoqle</span>
             </h1>
           </div>

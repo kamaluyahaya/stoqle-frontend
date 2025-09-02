@@ -209,6 +209,7 @@ const nextStep = async () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
+      credentials: 'include',
     });
 
     const data = await res.json(); // parse the response
@@ -233,6 +234,7 @@ const nextStep = async () => {
       try {  router.prefetch(`/${slug}/dashboard`); } catch (e) { /* ignore */ }
       setLoading(false);
       router.replace(`/${slug}/dashboard`)
+      
   } catch (err) {
     toast.error(`❌ Registration failed, please try again. ${err}`, {  position: 'top-center',});
   } finally {
@@ -476,27 +478,7 @@ const nextStep = async () => {
                 <p className="text-red-500 text-xs mt-1">{errors.businessCategory}</p>
                 )}
             </div>
-            {/* <div className="relative w-full">
-              <select
-                name="businessCategory"
-                value={formData.businessCategory}
-                onChange={handleChange}
-                className="peer w-full border border-gray-300 rounded-xl px-3 pt-4 pb-1 text-gray-900
-                  focus:border-black focus:ring-1 focus:ring-black focus:outline-none text-sm bg-white shadow-sm"
-              >
-                <option value="">Select category</option>
-                {businessCategories.map((category) => (
-                  <option key={category.id} value={category.name}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              {errors.businessCategory && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.businessCategory}
-                </p>
-              )}
-            </div> */}
+
             <MyInput
               id="referral"
               name="referral"

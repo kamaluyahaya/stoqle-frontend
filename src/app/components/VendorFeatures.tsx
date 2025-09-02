@@ -33,7 +33,7 @@ export default function VendorFeatures() {
         <div className="max-w-7xl mx-auto px-4">
 
           <div className="mx-7xl">
-  <h1 className=" p-10 text-4xl sm:text-6xl font-bold text-gray-900 px-4 sm:px-0">
+  <h1 className="p-10 text-3xl md:text-6xl font-semibold leading-tight">
     What We <span className="text-blue-500"> Offer</span>
   </h1>
 </div>

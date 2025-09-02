@@ -5,6 +5,7 @@ import FeaturedVendors from "./components/FeaturedVendors";
 import BenefitsSection from "./components/BenefitsSection";
 import FeaturedProducts from "./components/featuredProduct";
 import Footer from "./components/Footer";
+import AdvertSection from "./components/adert";
 
 export default function Home() {
   return (
@@ -14,13 +15,11 @@ export default function Home() {
     
       <HeroSection />
 
+      <AdvertSection/>
 
 
       <VendorFeatures />
       
-      {/* <FeaturedProducts /> */}
-
-
 
       <BenefitsSection />  
 
