@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 
 type SlideItem =
   | { type?: "image"; img: string; text?: string }
@@ -52,9 +52,13 @@ export default function HeroCarousel() {
   const timerRef = useRef<number | null>(null)
   const isPausedRef = useRef(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
+  
 
-  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
+  // persistent video refs keyed by "slideIndex-itemIndex"
+
+//   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
   const videoListeners = useRef<Record<string, { onPlay: () => void; onPause: () => void }>>({})
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
 
   const startTimer = () => {
     stopTimer()
@@ -125,36 +129,7 @@ export default function HeroCarousel() {
   }, [])
 
   // helper to assign video refs
-  const setVideoRef = (key: string) => (el: HTMLVideoElement | null) => {
-    const prevListeners = videoListeners.current[key]
-    const prevEl = videoRefs.current[key]
-    if (prevEl && prevListeners) {
-      prevEl.removeEventListener("play", prevListeners.onPlay)
-      prevEl.removeEventListener("pause", prevListeners.onPause)
-      delete videoListeners.current[key]
-    }
 
-    if (el) {
-      videoRefs.current[key] = el
-      el.muted = true
-      el.loop = true
-      el.playsInline = true
-
-      const onPlay = () => setPlayingMap((p) => ({ ...p, [key]: true }))
-      const onPause = () => setPlayingMap((p) => ({ ...p, [key]: false }))
-
-      el.addEventListener("play", onPlay)
-      el.addEventListener("pause", onPause)
-      videoListeners.current[key] = { onPlay, onPause }
-    } else {
-      delete videoRefs.current[key]
-      setPlayingMap((p) => {
-        const np = { ...p }
-        delete np[key]
-        return np
-      })
-    }
-  }
 
   const pauseAllVideos = () => {
     Object.entries(videoRefs.current).forEach(([k, v]) => {
@@ -228,6 +203,76 @@ export default function HeroCarousel() {
       setPlayingMap((p) => ({ ...p, [key]: false }))
     }
   }
+useEffect(() => {
+  const loaded: (HTMLImageElement | HTMLVideoElement)[] = []
+  slides.forEach((s) =>
+    s.items.forEach((it) => {
+      if ("type" in it && it.type === "video") {
+        // TS now knows `it` is the video variant
+        const v = document.createElement("video")
+        v.src = it.video
+        v.preload = "metadata"
+        loaded.push(v)
+      } else {
+        // fallback: image variant (or no explicit type)
+        const img = new Image()
+        img.src = ("img" in it && it.img) || ""
+        img.decoding = "async"
+        loaded.push(img)
+      }
+    })
+  )
+  return () => {
+    loaded.forEach((el) => {
+      try {
+        if (el instanceof HTMLImageElement) el.src = ""
+        else if (el instanceof HTMLVideoElement) el.src = ""
+      } catch {}
+    })
+  }
+}, [])
+
+  useEffect(() => {
+    timerRef.current = window.setInterval(() => setIndex((p) => (p + 1) % slides.length), INTERVAL_MS)
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current)
+    }
+  }, [])
+
+  const setVideoRef = (key: string) => (el: HTMLVideoElement | null) => {
+    videoRefs.current[key] = el
+    if (el) {
+      el.muted = true
+      el.loop = true
+      el.playsInline = true
+    }
+  }
+
+  // when index changes, pause videos not on current slide and try to play videos on current slide
+  useEffect(() => {
+    // pause others
+    Object.entries(videoRefs.current).forEach(([k, v]) => {
+      if (!v) return
+      if (!k.startsWith(`${index}-`)) {
+        try { v.pause(); v.currentTime = 0 } catch {}
+      }
+    })
+
+    // play current slide videos (best-effort)
+    const currentItems = slides[index]?.items ?? []
+    currentItems.forEach((item, i) => {
+      if ("type" in item && item.type === "video") {
+        const key = `${index}-${i}`
+        const v = videoRefs.current[key]
+        if (v) {
+          v.muted = true
+          const p = v.play()
+          if (p && p instanceof Promise) p.catch(() => {})
+        }
+      }
+    })
+  }, [index])
+
 useEffect(() => {
   if (slides.length === 0) return
   // only update if different
