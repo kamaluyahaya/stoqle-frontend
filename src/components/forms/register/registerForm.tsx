@@ -229,7 +229,10 @@ const nextStep = async () => {
       toast.success(`${user.business_slug} Login successful!`, { position: 'top-center' });
 
       const slug = user.business_slug || 'dashboard';
-      router.push(`/${slug}/dashboard`);
+
+      try {  router.prefetch(`/${slug}/dashboard`); } catch (e) { /* ignore */ }
+      setLoading(false);
+      router.replace(`/${slug}/dashboard`)
   } catch (err) {
     toast.error(`❌ Registration failed, please try again. ${err}`, {  position: 'top-center',});
   } finally {

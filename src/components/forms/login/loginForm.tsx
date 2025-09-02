@@ -72,6 +72,7 @@ export default function LoginForm() {
 
     setLoading(true);
     setErrorMsg(null);
+    
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
@@ -92,11 +93,14 @@ export default function LoginForm() {
       const token = data.data.token;
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', JSON.stringify(token));
+      
 
       toast.success(`${user.business_slug} Login successful!`, { position: 'top-center' });
 
       const slug = user.business_slug || 'dashboard';
-      router.push(`/${slug}/dashboard`);
+            try {  router.prefetch(`/${slug}/dashboard`); } catch (e) { /* ignore */ }
+      setLoading(false);
+      router.replace(`/${slug}/dashboard`)
     } catch (err) {
       console.error(err);
       const msg = 'Something went wrong. Please try again.';
