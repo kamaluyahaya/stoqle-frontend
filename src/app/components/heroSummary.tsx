@@ -62,15 +62,6 @@ export default function HeroCarousel() {
 
   const startTimer = () => {
     stopTimer()
-    // guard: don't start if there are no slides (avoid modulo by 0)
-    if (!slides || slides.length === 0) return
-    timerRef.current = window.setInterval(() => {
-      setIndex((prev) => {
-        // double-check slides length here so we don't divide by 0
-        const len = slides.length || 1
-        return (prev + 1) % len
-      })
-    }, INTERVAL_MS)
   }
   const stopTimer = () => {
     if (timerRef.current) {
@@ -222,15 +213,16 @@ useEffect(() => {
       }
     })
   )
-  return () => {
-    loaded.forEach((el) => {
-      try {
-        if (el instanceof HTMLImageElement) el.src = ""
-        else if (el instanceof HTMLVideoElement) el.src = ""
-      } catch {}
-    })
-  }
-}, [])
+    return () => {
+      // release references
+      loaded.forEach((el) => {
+        try {
+          // clear to help GC
+          if ((el as HTMLImageElement).src) (el as HTMLImageElement).src = ""
+        } catch {}
+      })
+    }
+  }, [])
 
   useEffect(() => {
     timerRef.current = window.setInterval(() => setIndex((p) => (p + 1) % slides.length), INTERVAL_MS)
@@ -239,14 +231,6 @@ useEffect(() => {
     }
   }, [])
 
-  const setVideoRef = (key: string) => (el: HTMLVideoElement | null) => {
-    videoRefs.current[key] = el
-    if (el) {
-      el.muted = true
-      el.loop = true
-      el.playsInline = true
-    }
-  }
 
   // when index changes, pause videos not on current slide and try to play videos on current slide
   useEffect(() => {
