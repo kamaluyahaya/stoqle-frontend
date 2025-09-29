@@ -100,7 +100,11 @@ export default function LoginForm() {
       const slug = user.business_slug || 'dashboard';
             try {  router.prefetch(`/${slug}/dashboard`); } catch (e) { /* ignore */ }
       setLoading(false);
-      router.replace(`/${slug}/dashboard`)
+      // router.replace(`/${slug}/dashboard`)
+
+      setTimeout(() => {
+      window.location.href = `/${slug}/dashboard`;
+    }, 300);
     } catch (err) {
       console.error(err);
       const msg = 'Something went wrong. Please try again.';
